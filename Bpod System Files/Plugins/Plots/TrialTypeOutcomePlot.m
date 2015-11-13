@@ -74,7 +74,7 @@ switch Action
         BpodSystem.GUIHandles.RewardedCorrectLine = line(0,0, 'LineStyle','none','Marker','o','MarkerEdge','g','MarkerFace','g', 'MarkerSize',6);
         BpodSystem.GUIHandles.UnrewardedCorrectLine = line(0,0, 'LineStyle','none','Marker','o','MarkerEdge','g','MarkerFace',[1 1 1], 'MarkerSize',6);
         BpodSystem.GUIHandles.NoResponseLine = line(0,0, 'LineStyle','none','Marker','o','MarkerEdge','b','MarkerFace',[1 1 1], 'MarkerSize',6);
-        set(AxesHandle,'TickDir', 'out','YLim', [-MaxTrialType-.5, -.5], 'YTick', -MaxTrialType:1:-1,'YTickLabel', strsplit(num2str(MaxTrialType:-1:-1)), 'FontSize', 16);
+        set(AxesHandle,'TickDir', 'out','YLim', [-MaxTrialType-.5, -.5], 'YTick', -MaxTrialType:1:-1,'YTickLabel', num2str(MaxTrialType:-1:-1), 'FontSize', 16);
         xlabel(AxesHandle, 'Trial#', 'FontSize', 18);
         ylabel(AxesHandle, 'Trial Type', 'FontSize', 16);
         hold(AxesHandle, 'on');
