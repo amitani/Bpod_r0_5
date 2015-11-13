@@ -15,25 +15,27 @@ unsigned long wait_until_next(){
 
 String serialBuffer;
 String command;
-const int pin=13;
+const int pin[2]={13,12};
 void setup() {
   // put your setup code here, to run once:
    Serial.begin(115200);
-   //analogReadResolution(12);
+   analogReadResolution(12);
    serialBuffer.reserve(200);
    command.reserve(200);
    
-   pinMode(pin, OUTPUT);
+   pinMode(pin[0], OUTPUT);
+   pinMode(pin[1], OUTPUT);
 }
 
 unsigned long current_millis;
 unsigned int current_millis_remainder;
 int val;
-int threshold[2]={256,512};
+int threshold[4]={1600,2800,1200,1600};
 unsigned long window=200; // ms
 unsigned long last_below_threshold[2]={1,0};
 int i;
 char output[20];
+char flag[2];
 
 void loop() {
   while (Serial.available()){
@@ -49,10 +51,16 @@ void loop() {
       threshold[0]=command.toInt();      
     }else if(command.startsWith("T2 ")){
       command=command.substring(command.indexOf(' ')+1);
-      threshold[1]=command.toInt();     
+      threshold[1]=command.toInt(); 
+    }else if(command.startsWith("T3 ")){
+      command=command.substring(command.indexOf(' ')+1);
+      threshold[2]=command.toInt(); 
+    }else if(command.startsWith("T4 ")){
+      command=command.substring(command.indexOf(' ')+1);
+      threshold[3]=command.toInt(); 
     }else if(command.startsWith("I ")){
       command=command.substring(command.indexOf(' ')+1);
-      window=command.toInt();     
+      window=command.toInt();
     }
   }
   
@@ -64,13 +72,22 @@ void loop() {
   }
   
   current_millis_remainder=current_millis%10000;
-  if(val>threshold[1] && last_below_threshold[1]-last_below_threshold[0]<window*1000){
-    digitalWrite(pin,HIGH);
-    sprintf(output,"%04uH%4u",current_millis_remainder,val);
+  if(val>threshold[1] && last_below_threshold[1]-last_below_threshold[0]<window){
+    digitalWrite(pin[0],HIGH);
+    flag[0]='H';
   }else{
-    digitalWrite(pin,LOW);
-    sprintf(output,"%04uL%4u",current_millis_remainder,val);
+    digitalWrite(pin[0],LOW);
+    flag[0]='L';
   }
+  if(val>threshold[2] && val<threshold[3]){
+    digitalWrite(pin[1],HIGH);
+    flag[1]='H';
+  }else{
+    digitalWrite(pin[1],LOW);
+    flag[1]='L';
+  }
+  
+  sprintf(output,"%04u%c%c%4u",current_millis_remainder,flag[0],flag[1],val);
   Serial.println(output);
 }
 
