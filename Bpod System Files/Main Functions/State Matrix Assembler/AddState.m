@@ -75,6 +75,7 @@ for x = 2:2:length(StateChangeConditions)
 end
 %% Add state transitions
 EventNames = BpodSystem.EventNames;
+assert(mod(length(StateChangeConditions),2)==0);
 for x = 1:2:length(StateChangeConditions)
     CandidateEventCode = find(strcmp(StateChangeConditions{x},EventNames));
     TargetState = StateChangeConditions{x+1};
