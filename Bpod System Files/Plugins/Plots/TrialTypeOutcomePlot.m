@@ -66,15 +66,15 @@ switch Action
         MaxTrialType = max(TrialTypeList);
         %plot in specified axes
         Xdata = 1:nTrialsToShow; Ydata = -TrialTypeList(Xdata);
-        BpodSystem.GUIHandles.FutureTrialLine = line([Xdata,Xdata],[Ydata,Ydata],'LineStyle','none','Marker','o','MarkerEdge','b','MarkerFace','b', 'MarkerSize',6);
-        BpodSystem.GUIHandles.CurrentTrialCircle = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge','k','MarkerFace',[1 1 1], 'MarkerSize',6);
-        BpodSystem.GUIHandles.CurrentTrialCross = line([0,0],[0,0], 'LineStyle','none','Marker','+','MarkerEdge','k','MarkerFace',[1 1 1], 'MarkerSize',6);
-        BpodSystem.GUIHandles.UnpunishedErrorLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge','r','MarkerFace',[1 1 1], 'MarkerSize',6);
-        BpodSystem.GUIHandles.PunishedErrorLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge','r','MarkerFace','r', 'MarkerSize',6);
-        BpodSystem.GUIHandles.RewardedCorrectLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge','g','MarkerFace','g', 'MarkerSize',6);
-        BpodSystem.GUIHandles.UnrewardedCorrectLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge','g','MarkerFace',[1 1 1], 'MarkerSize',6);
-        BpodSystem.GUIHandles.NoResponseLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge','b','MarkerFace',[1 1 1], 'MarkerSize',6);
-        set(AxesHandle,'TickDir', 'out','YLim', [-MaxTrialType-.5, -.5], 'YTick', -MaxTrialType:1:-1,'YTickLabel', strsplit(num2str(MaxTrialType:-1:-1)), 'FontSize', 16);
+        BpodSystem.GUIHandles.FutureTrialLine = line(Xdata,Ydata,'LineStyle','none','Marker','o','MarkerEdge','b','MarkerFace','b', 'MarkerSize',6);
+        BpodSystem.GUIHandles.CurrentTrialCircle = line(0,0, 'LineStyle','none','Marker','o','MarkerEdge','k','MarkerFace',[1 1 1], 'MarkerSize',6);
+        BpodSystem.GUIHandles.CurrentTrialCross = line(0,0, 'LineStyle','none','Marker','+','MarkerEdge','k','MarkerFace',[1 1 1], 'MarkerSize',6);
+        BpodSystem.GUIHandles.UnpunishedErrorLine = line(0,0, 'LineStyle','none','Marker','o','MarkerEdge','r','MarkerFace',[1 1 1], 'MarkerSize',6);
+        BpodSystem.GUIHandles.PunishedErrorLine = line(0,0, 'LineStyle','none','Marker','o','MarkerEdge','r','MarkerFace','r', 'MarkerSize',6);
+        BpodSystem.GUIHandles.RewardedCorrectLine = line(0,0, 'LineStyle','none','Marker','o','MarkerEdge','g','MarkerFace','g', 'MarkerSize',6);
+        BpodSystem.GUIHandles.UnrewardedCorrectLine = line(0,0, 'LineStyle','none','Marker','o','MarkerEdge','g','MarkerFace',[1 1 1], 'MarkerSize',6);
+        BpodSystem.GUIHandles.NoResponseLine = line(0,0, 'LineStyle','none','Marker','o','MarkerEdge','b','MarkerFace',[1 1 1], 'MarkerSize',6);
+        set(AxesHandle,'TickDir', 'out','YLim', [-MaxTrialType-.5, -.5], 'YTick', -MaxTrialType:1:-1,'YTickLabel', num2str(MaxTrialType:-1:-1), 'FontSize', 16);
         xlabel(AxesHandle, 'Trial#', 'FontSize', 18);
         ylabel(AxesHandle, 'Trial Type', 'FontSize', 16);
         hold(AxesHandle, 'on');
@@ -95,10 +95,10 @@ switch Action
         %plot future trials
         FutureTrialsIndx = CurrentTrial:mx;
         Xdata = FutureTrialsIndx; Ydata = TrialTypeList(Xdata);
-        set(BpodSystem.GUIHandles.FutureTrialLine, 'xdata', [Xdata,Xdata], 'ydata', [Ydata,Ydata]);
+        set(BpodSystem.GUIHandles.FutureTrialLine, 'xdata', Xdata, 'ydata', Ydata);
         %Plot current trial
-        set(BpodSystem.GUIHandles.CurrentTrialCircle, 'xdata', [CurrentTrial,CurrentTrial], 'ydata', [TrialTypeList(CurrentTrial),TrialTypeList(CurrentTrial)]);
-        set(BpodSystem.GUIHandles.CurrentTrialCross, 'xdata', [CurrentTrial,CurrentTrial], 'ydata', [TrialTypeList(CurrentTrial),TrialTypeList(CurrentTrial)]);
+        set(BpodSystem.GUIHandles.CurrentTrialCircle, 'xdata', CurrentTrial, 'ydata', TrialTypeList(CurrentTrial));
+        set(BpodSystem.GUIHandles.CurrentTrialCross, 'xdata', CurrentTrial, 'ydata', TrialTypeList(CurrentTrial));
         
         %Plot past trials
         if ~isempty(OutcomeRecord)
@@ -106,23 +106,23 @@ switch Action
             %Plot Error, unpunished
             EarlyWithdrawalTrialsIndx =(OutcomeRecord(indxToPlot) == -1);
             Xdata = indxToPlot(EarlyWithdrawalTrialsIndx); Ydata = TrialTypeList(Xdata);
-            set(BpodSystem.GUIHandles.UnpunishedErrorLine, 'xdata', [Xdata,Xdata], 'ydata', [Ydata,Ydata]);
+            set(BpodSystem.GUIHandles.UnpunishedErrorLine, 'xdata', Xdata, 'ydata', Ydata);
             %Plot Error, punished
             InCorrectTrialsIndx = (OutcomeRecord(indxToPlot) == 0);
             Xdata = indxToPlot(InCorrectTrialsIndx); Ydata = TrialTypeList(Xdata);
-            set(BpodSystem.GUIHandles.PunishedErrorLine, 'xdata', [Xdata,Xdata], 'ydata', [Ydata,Ydata]);
+            set(BpodSystem.GUIHandles.PunishedErrorLine, 'xdata', Xdata, 'ydata', Ydata);
             %Plot Correct, rewarded
             CorrectTrialsIndx = (OutcomeRecord(indxToPlot) == 1);
             Xdata = indxToPlot(CorrectTrialsIndx); Ydata = TrialTypeList(Xdata);
-            set(BpodSystem.GUIHandles.RewardedCorrectLine, 'xdata', [Xdata,Xdata], 'ydata', [Ydata,Ydata]);
+            set(BpodSystem.GUIHandles.RewardedCorrectLine, 'xdata', Xdata, 'ydata', Ydata);
             %Plot Correct, unrewarded
             UnrewardedTrialsIndx = (OutcomeRecord(indxToPlot) == 2);
             Xdata = indxToPlot(UnrewardedTrialsIndx); Ydata = TrialTypeList(Xdata);
-            set(BpodSystem.GUIHandles.UnrewardedCorrectLine, 'xdata', [Xdata,Xdata], 'ydata', [Ydata,Ydata]);
+            set(BpodSystem.GUIHandles.UnrewardedCorrectLine, 'xdata', Xdata, 'ydata', Ydata);
             %Plot DidNotChoose
             DidNotChooseTrialsIndx = (OutcomeRecord(indxToPlot) == 3);
             Xdata = indxToPlot(DidNotChooseTrialsIndx); Ydata = TrialTypeList(Xdata);
-            set(BpodSystem.GUIHandles.NoResponseLine, 'xdata', [Xdata,Xdata], 'ydata', [Ydata,Ydata]);
+            set(BpodSystem.GUIHandles.NoResponseLine, 'xdata', Xdata, 'ydata', Ydata);
         end
 end
 

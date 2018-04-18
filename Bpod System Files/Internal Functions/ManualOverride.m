@@ -94,23 +94,27 @@ switch TargetCode
         else
             error('The soft code must be a byte in the range 0-255');
         end
+        ButtonHandle=BpodSystem.GUIHandles.SoftTriggerButton;
         OverrideMessage = ['VS' Databyte];
     case 9
-        Databyte = str2double(get(BpodSystem.GUIHandles.HWSerialCodeSelector1, 'String'));
+        switch ChannelCode
+            case 0
+                SelectorHandle = BpodSystem.GUIHandles.HWSerialCodeSelector1;
+                ButtonHandle=BpodSystem.GUIHandles.HWSerialTriggerButton1;
+                MessageHeader=['H' 1];
+                
+            case 1
+                SelectorHandle = BpodSystem.GUIHandles.HWSerialCodeSelector2;
+                ButtonHandle=BpodSystem.GUIHandles.HWSerialTriggerButton2;
+                MessageHeader=['H' 2];
+        end
+        Databyte = str2double(get(SelectorHandle, 'String'));
         if Databyte >= 0
-            Databyte = uint8(DataByte);
+            Databyte = uint8(Databyte);
         else
             error('The serial message must be a byte in the range 0-255');
         end
-        OverrideMessage = ['H1' Databyte];
-    case 10
-        Databyte = str2double(get(BpodSystem.GUIHandles.HWSerialCodeSelector2, 'String'));
-        if Databyte >= 0
-            Databyte = uint8(DataByte);
-        else
-            error('The serial message must be a byte in the range 0-255');
-        end
-        OverrideMessage = ['H2' Databyte];
+        OverrideMessage = [MessageHeader Databyte];
 end
 
 %% Send message to Bpod

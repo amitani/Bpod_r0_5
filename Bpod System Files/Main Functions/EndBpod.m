@@ -29,7 +29,11 @@ catch
 end
 if BpodSystem.BeingUsed == 0
     if BpodSystem.EmulatorMode == 0
-        BpodSerialWrite('Z', 'uint8');
+        try
+            BpodSerialWrite('Z', 'uint8');
+        catch e
+            disp(e);
+        end
     end
     pause(.1);
     delete(BpodSystem.GUIHandles.MainFig);
