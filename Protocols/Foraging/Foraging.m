@@ -48,8 +48,10 @@ if isempty(fieldnames(S))  % If settings file was an empty struct, populate stru
     end
     switch(indx)
         case 1 %Foraging
-            S.GUI.LowArmProb = 0.1;
-            S.GUI.HighArmProb = 0.8;
+            S.GUI.LowArmProb1 = 0.1;
+            S.GUI.HighArmProb1 = 0.6;
+            S.GUI.LowArmProb2 = 0.175;
+            S.GUI.HighArmProb2 = 0.525;
             S.GUI.MinBlock = 60;
             S.GUI.MaxBlock = 80;
             S.GUI.WaitToClear = 0;
@@ -71,8 +73,10 @@ if isempty(fieldnames(S))  % If settings file was an empty struct, populate stru
             S.GUI.MissPunishment = 0;
             S.GUI.FAPunishment = 2; 
         case 2 %Forced alternate
-            S.GUI.LowArmProb = 0;
-            S.GUI.HighArmProb = 1;
+            S.GUI.LowArmProb1 = 0;
+            S.GUI.HighArmProb1 = 1;
+            S.GUI.LowArmProb2 = 0;
+            S.GUI.HighArmProb2 = 1;
             S.GUI.MinBlock = 1;
             S.GUI.MaxBlock = 1;
             S.GUI.WaitToClear = 1;
@@ -94,8 +98,10 @@ if isempty(fieldnames(S))  % If settings file was an empty struct, populate stru
             S.GUI.MissPunishment = 0;
             S.GUI.FAPunishment = 2; 
         case 3 %Alternate
-            S.GUI.LowArmProb = 0;
-            S.GUI.HighArmProb = 1;
+            S.GUI.LowArmProb1 = 0;
+            S.GUI.HighArmProb1 = 1;
+            S.GUI.LowArmProb2 = 0;
+            S.GUI.HighArmProb2 = 1;
             S.GUI.MinBlock = 1;
             S.GUI.MaxBlock = 1;
             S.GUI.WaitToClear = 0;
@@ -117,10 +123,12 @@ if isempty(fieldnames(S))  % If settings file was an empty struct, populate stru
             S.GUI.MissPunishment = 0;
             S.GUI.FAPunishment = 2; 
         case 4 % Lick
-            S.GUI.LowArmProb = 1;
-            S.GUI.HighArmProb = 1;
-            S.GUI.MinBlock = 60;
-            S.GUI.MaxBlock = 80;
+            S.GUI.LowArmProb1 = 1;
+            S.GUI.HighArmProb1 = 1;
+            S.GUI.LowArmProb2 = 1;
+            S.GUI.HighArmProb2 = 1;
+            S.GUI.MinBlock = 1;
+            S.GUI.MaxBlock = 1;
             S.GUI.WaitToClear = 0;
             S.GUI.ClearOnBlockSwitch = 0;
             S.GUI.ReadyPeriod = 2;
@@ -151,17 +159,23 @@ TrialTypes = ones(5000,1);
 BpodSystem.Data.TrialTypes = []; % The trial type of each trial completed will be added here.[200 200 1000 200]
 
 %% Initialize plots
-BpodSystem.ProtocolFigures.OutcomePlotFig = figure('Position', [425 250 500 200],'name','Outcome plot','numbertitle','off', 'MenuBar', 'none', 'Resize', 'on');
-BpodSystem.GUIHandles.OutcomePlot = axes('Position', [.2 .3 .75 .5]);
-TrialTypeOutcomePlot(BpodSystem.GUIHandles.OutcomePlot,'init',TrialTypes);
+BpodSystem.ProtocolFigures.SideOutcomePlot = figure('Position', [425 050 450 200],'name','Outcome plot','numbertitle','off', 'MenuBar', 'none', 'Resize', 'on');
+BpodSystem.GUIHandles.SideOutcomePlot = axes();
+BpodSystem.ProtocolFigures.LickOutcomePlot = figure('Position', [425 250 450 400],'name','Lick plot','numbertitle','off', 'MenuBar', 'none', 'Resize', 'on');
+BpodSystem.GUIHandles.LickRasterPlot = axes();
+BpodSystem.ProtocolFigures.BlockPlot = figure('Position', [425 650 450 200],'name','Block plot','numbertitle','off', 'MenuBar', 'none', 'Resize', 'on');
+BpodSystem.GUIHandles.BlockPlot = axes();
 BpodNotebook('init');
 
 %% Main trial loop
 block_count = 0;
+block_length_list = [];
+side_list = [];
 current_block_length = 0;
 reward_left = 0;
 reward_right = 0;
-right_high = 0;
+right_high = randi(2)-1;
+ith_block = 0;
 
 for currentTrial = 1:MaxTrials
     disp(['Trial #: ', num2str(currentTrial)]);
@@ -176,23 +190,34 @@ for currentTrial = 1:MaxTrials
          if(~(S.GUI.WaitToClear && (reward_left||reward_right)))
              % if wait to clear and either has a reward, continue current
              % block
+             ith_block = ith_block+1;  % 1 2 3 4 ... 
+             ith_prob_block = floor((ith_block-1)/2);  % 0 0 1 1 2 2 ... 
              min_block = min(S.GUI.MaxBlock, S.GUI.MinBlock);
              max_block = max(S.GUI.MaxBlock, S.GUI.MinBlock);
              block_lengths = min_block:max_block;
              current_block_length = block_lengths(randi(length(block_lengths)));
              right_high = ~right_high;
+             block_length_list(end+1) = current_block_length;
+             side_list(end+1) = right_high;
              if(S.GUI.ClearOnBlockSwitch)
                  reward_left = 0;
                  reward_right = 0;
              end
          end
     end
-    if(right_high)
-        reward_right = reward_right | (rand(1) < S.GUI.HighArmProb);
-        reward_left  = reward_left | (rand(1) < S.GUI.LowArmProb);
+    if(mod(ith_prob_block,2)==0)
+        high_prob = S.GUI.HighArmProb1;
+        low_prob = S.GUI.LowArmProb1;
     else
-        reward_right = reward_right | (rand(1) < S.GUI.LowArmProb);
-        reward_left  = reward_left | (rand(1) < S.GUI.HighArmProb);
+        high_prob = S.GUI.HighArmProb2;
+        low_prob = S.GUI.LowArmProb2;
+    end
+    if(right_high)
+        reward_right = reward_right | (rand(1) < high_prob);
+        reward_left  = reward_left | (rand(1) < low_prob);
+    else
+        reward_right = reward_right | (rand(1) < low_prob);
+        reward_left  = reward_left | (rand(1) < high_prob);
     end
     
     sma = NewStateMatrix(); % Assemble state matrix
@@ -263,20 +288,20 @@ for currentTrial = 1:MaxTrials
         end
     end
     
-    sma = AddState(sma, 'Name', 'RewardRight', ...
-        'Timer', S.GUI.RewardSoundDuration,...
-        'StateChangeConditions', {'Tup', 'WaterRight'},...  
-        'OutputActions', {'Serial1Code',S.GUI.RightSound});
-    sma = AddState(sma, 'Name', 'WaterRight', ...
-        'Timer', S.GUI.RewardWaterDuration,...
-        'StateChangeConditions', {'Tup', 'ITI'},...  
-        'OutputActions', {'Serial1Code',0, 'PWM1',255});
-    
     sma = AddState(sma, 'Name', 'RewardLeft', ...
         'Timer', S.GUI.RewardSoundDuration,...
         'StateChangeConditions', {'Tup', 'WaterLeft'},...  
         'OutputActions', {'Serial1Code',S.GUI.LeftSound});
     sma = AddState(sma, 'Name', 'WaterLeft', ...
+        'Timer', S.GUI.RewardWaterDuration,...
+        'StateChangeConditions', {'Tup', 'ITI'},...  
+        'OutputActions', {'Serial1Code',0, 'PWM1',255});
+    
+    sma = AddState(sma, 'Name', 'RewardRight', ...
+        'Timer', S.GUI.RewardSoundDuration,...
+        'StateChangeConditions', {'Tup', 'WaterRight'},...  
+        'OutputActions', {'Serial1Code',S.GUI.RightSound});
+    sma = AddState(sma, 'Name', 'WaterRight', ...
         'Timer', S.GUI.RewardWaterDuration,...
         'StateChangeConditions', {'Tup', 'ITI'},...  
         'OutputActions', {'Serial1Code',0, 'PWM2',255});
@@ -314,7 +339,7 @@ for currentTrial = 1:MaxTrials
         BpodSystem.Data = BpodNotebook('sync', BpodSystem.Data); % Sync with Bpod notebook plugin
         BpodSystem.Data.TrialSettings(currentTrial) = S; % Adds the settings used for the current trial to the Data struct (to be saved after the trial ends)
         BpodSystem.Data.TrialTypes(currentTrial) = TrialTypes(currentTrial); % Adds the trial type of the current trial to data
-        UpdateOutcomePlot(TrialTypes, BpodSystem.Data);
+        UpdateOutcomePlot(TrialTypes, BpodSystem.Data, block_length_list, side_list);
         SaveBpodSessionData; % Saves the field BpodSystem.Data to the current data file
         if(~isnan(BpodSystem.Data.RawEvents.Trial{end}.States.RewardLeft(1)))
             reward_left = false;
@@ -329,9 +354,132 @@ for currentTrial = 1:MaxTrials
     end
 end
 
-function UpdateOutcomePlot(TrialTypes, Data)
+function UpdateOutcomePlot(TrialTypes, Data, block_length_list, side_list)
 global BpodSystem
-Outcomes = zeros(1,Data.nTrials);
+
+for x = 1:Data.nTrials
+    LeftIn(x) = ~isnan(Data.RawEvents.Trial{x}.States.LeftIn(1));
+    RightIn(x) = ~isnan(Data.RawEvents.Trial{x}.States.RightIn(1));
+    RewardLeft(x) = ~isnan(Data.RawEvents.Trial{x}.States.RewardLeft(1));
+    RewardRight(x) = ~isnan(Data.RawEvents.Trial{x}.States.RewardRight(1));
+    Alarm(x) =  ~isnan(Data.RawEvents.Trial{x}.States.Alarm(1));
+end
+Rewarded = RewardLeft|RewardRight;
+axes(BpodSystem.GUIHandles.SideOutcomePlot);
+%%
+cla;
+hold on;
+total_block_length = 0;
+for i=1:length(block_length_list)
+    if(i == length(block_length_list))
+        len = length(Rewarded) - total_block_length;
+    else
+        len = block_length_list(i);
+    end
+    if(side_list(i)) % right_high
+        rectangle('Position', [total_block_length+0.5, 2.5, len, 1],'EdgeColor','none','FaceColor',[1,0.8,0.8]);
+    else
+        rectangle('Position', [total_block_length+0.5, 0.5, len, 1],'EdgeColor','none','FaceColor',[0.8,0.8,1]);
+    end 
+    total_block_length = total_block_length+block_length_list(i);
+end
+
+if(~isempty(find(RightIn&Rewarded)));plot(find(RightIn&Rewarded),3,'m.');end
+if(~isempty(find(RightIn&~Rewarded)));plot(find(RightIn&~Rewarded),3,'k.');end
+Miss = ~(LeftIn | RightIn | Alarm);
+if(~isempty(find(Miss)));plot(find(Miss),2,'c.');end
+if(~isempty(find(Alarm)));plot(find(Alarm),2,'k.');end
+if(~isempty(find(LeftIn&Rewarded)));plot(find(LeftIn&Rewarded),1,'c.');end
+if(~isempty(find(LeftIn&~Rewarded)));plot(find(LeftIn&~Rewarded),1,'k.');end
+ylim([0.5 3.5]);
+set(gca,'ytick',1:3,'yticklabel',{'Left','M/A','Right'});
+
+if(Data.nTrials > 300)
+    xlim([Data.nTrials-300, Data.nTrials]);
+else
+    xlim([0 300]);
+end
+%%
+
+axes(BpodSystem.GUIHandles.LickRasterPlot);
+%%
+cla;
+set(gca,'Ydir','reverse')
+hold on;
+total_block_length = 0;
+for i=1:length(block_length_list)
+    if(i == length(block_length_list))
+        len = length(Rewarded) - total_block_length;
+    else
+        len = block_length_list(i);
+    end
+    if(side_list(i)) % right_high
+        rectangle('Position', [0, total_block_length, 11.5, len],'EdgeColor','none','FaceColor',[1,0.8,0.8]);
+    else
+        rectangle('Position', [0, total_block_length, 11.5, len],'EdgeColor','none','FaceColor',[0.8,0.8,1]);
+    end 
+    total_block_length = total_block_length+block_length_list(i);
+end
+%%
+for x = 1:Data.nTrials
+    t0 = Data.RawEvents.Trial{x}.States.Ready(1);
+    answer = Data.RawEvents.Trial{x}.States.Answer(1) - t0;
+    left = [];
+    right = [];
+    try
+        left = Data.RawEvents.Trial{x}.Events.Port1In - t0;
+        right = Data.RawEvents.Trial{x}.Events.Port2In - t0;
+    catch
+    end
+    % answer, answer+2  black line
+    % blue for left, red for right
+    plot([answer answer],[x-1 x],'k');
+    plot([answer+2 answer+2],[x-1 x],'k');
+    for t = left(:)'
+        plot([t t],[x-1,x],'b');
+    end
+    for t = right(:)'
+        plot([t t],[x-1,x],'r');
+    end
+end
+
+if(Data.nTrials > 50)
+    ylim([Data.nTrials-50, Data.nTrials]);
+else
+    ylim([0 50]);
+end
+%%
+
+axes(BpodSystem.GUIHandles.BlockPlot);
+%%
+cla
+set(gca,'Ydir','normal')
+hold on
+total_block_length = 0;
+correct_rate = zeros(length(block_length_list),1);
+miss_rate = zeros(length(block_length_list),1);
+alarm_rate = zeros(length(block_length_list),1);
+for i=1:length(block_length_list)
+    I = total_block_length+(1:block_length_list(i));
+    I(I>length(RightIn))=[];
+    if(side_list(i)) % right_high
+        correct_rate(i) = mean(RightIn(I));
+    else
+        correct_rate(i) = mean(LeftIn(I));
+    end
+    miss_rate(i) = mean(Miss(I));
+    alarm_rate(i) = mean(Alarm(I));
+    
+    total_block_length = total_block_length+block_length_list(i);
+end
+x = 1:length(alarm_rate);
+plot(x,correct_rate,'g.');
+plot(x, miss_rate,'c.');
+plot(x, alarm_rate,'k.');
+xlim([0 length(alarm_rate)+0.5]);
+ylim([0 1]);
+
+
 % for x = 1:Data.nTrials
 %     if isnan(Data.RawEvents.Trial{x}.States.LadderOFF(1))
 %         Outcomes(x) = 1;% success
@@ -341,4 +489,4 @@ Outcomes = zeros(1,Data.nTrials);
 % %         Outcomes(x) = 1;
 %     end
 % end
-TrialTypeOutcomePlot(BpodSystem.GUIHandles.OutcomePlot,'update',Data.nTrials+1,TrialTypes,Outcomes)
+% TrialTypeOutcomePlot(,'update',Data.nTrials+1,TrialTypes,Outcomes)
