@@ -365,8 +365,8 @@ end
 function UpdateOutcomePlot(TrialTypes, Data, block_length_list, side_list)
 global BpodSystem
 
-disp(block_length_list)
-disp(side_list);
+% disp(block_length_list)
+% disp(side_list);
 
 
 for x = 1:Data.nTrials
