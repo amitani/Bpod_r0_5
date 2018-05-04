@@ -56,7 +56,8 @@ if isempty(fieldnames(S))  % If settings file was an empty struct, populate stru
             S.GUI.MaxBlock = 80;
             S.GUI.WaitToClear = 0;
             S.GUI.ClearOnBlockSwitch = 0;
-            S.GUI.ReadyPeriod = 2;
+            S.GUI.ReadyPeriod1 = 2;
+            S.GUI.ReadyPeriod2 = 2.5;
             S.GUI.AnswerPeriod = 2;
             S.GUI.AnswerSound = 15;
             S.GUI.AnyLick = 0;
@@ -71,7 +72,7 @@ if isempty(fieldnames(S))  % If settings file was an empty struct, populate stru
             S.GUI.AlarmSoundDuration = 0.5;
             S.GUI.AlarmPunishment = 2;
             S.GUI.MissPunishment = 0;
-            S.GUI.FAPunishment = 2; 
+            S.GUI.FAPunishment = 0; 
         case 2 %Forced alternate
             S.GUI.LowArmProb1 = 0;
             S.GUI.HighArmProb1 = 1;
@@ -81,7 +82,8 @@ if isempty(fieldnames(S))  % If settings file was an empty struct, populate stru
             S.GUI.MaxBlock = 1;
             S.GUI.WaitToClear = 1;
             S.GUI.ClearOnBlockSwitch = 1;
-            S.GUI.ReadyPeriod = 2;
+            S.GUI.ReadyPeriod1 = 2;
+            S.GUI.ReadyPeriod2 = 2.5;
             S.GUI.AnswerPeriod = 2;
             S.GUI.AnswerSound = 15;
             S.GUI.AnyLick = 0;
@@ -96,7 +98,6 @@ if isempty(fieldnames(S))  % If settings file was an empty struct, populate stru
             S.GUI.AlarmSoundDuration = 0.5;
             S.GUI.AlarmPunishment = 2;
             S.GUI.MissPunishment = 0;
-            S.GUI.FAPunishment = 2; 
         case 3 %Alternate
             S.GUI.LowArmProb1 = 0;
             S.GUI.HighArmProb1 = 1;
@@ -106,7 +107,8 @@ if isempty(fieldnames(S))  % If settings file was an empty struct, populate stru
             S.GUI.MaxBlock = 1;
             S.GUI.WaitToClear = 0;
             S.GUI.ClearOnBlockSwitch = 1;
-            S.GUI.ReadyPeriod = 2;
+            S.GUI.ReadyPeriod1 = 2;
+            S.GUI.ReadyPeriod2 = 2.5;
             S.GUI.AnswerPeriod = 2;
             S.GUI.AnswerSound = 15;
             S.GUI.AnyLick = 1;
@@ -121,7 +123,6 @@ if isempty(fieldnames(S))  % If settings file was an empty struct, populate stru
             S.GUI.AlarmSoundDuration = 0.5;
             S.GUI.AlarmPunishment = 2;
             S.GUI.MissPunishment = 0;
-            S.GUI.FAPunishment = 2; 
         case 4 % Lick
             S.GUI.LowArmProb1 = 1;
             S.GUI.HighArmProb1 = 1;
@@ -131,7 +132,8 @@ if isempty(fieldnames(S))  % If settings file was an empty struct, populate stru
             S.GUI.MaxBlock = 1;
             S.GUI.WaitToClear = 0;
             S.GUI.ClearOnBlockSwitch = 0;
-            S.GUI.ReadyPeriod = 2;
+            S.GUI.ReadyPeriod1 = 2;
+            S.GUI.ReadyPeriod2 = 2.5;
             S.GUI.AnswerPeriod = 2;
             S.GUI.AnswerSound = 15;
             S.GUI.AnyLick = 0;
@@ -142,11 +144,10 @@ if isempty(fieldnames(S))  % If settings file was an empty struct, populate stru
             S.GUI.MinITI = 5;
             S.GUI.MaxITI = 7;
             S.GUI.ITIStep = 0.5;
-            S.GUI.AlarmSound = 0; % WhiteNoize
+            S.GUI.AlarmSound = 0; % No Noize
             S.GUI.AlarmSoundDuration = 0;
             S.GUI.AlarmPunishment = 0;
             S.GUI.MissPunishment = 0;
-            S.GUI.FAPunishment = 2; 
     end
 end
 
@@ -203,6 +204,8 @@ for currentTrial = 1:MaxTrials
                  reward_left = 0;
                  reward_right = 0;
              end
+         else
+             block_length_list(end) = block_length_list(end)+1;
          end
     end
     if(mod(ith_prob_block,2)==0)
@@ -224,15 +227,20 @@ for currentTrial = 1:MaxTrials
     
     sma = addBitcodeStates(sma, currentTrial, 'Ready');
     
+    if(randi(2)==1)
+        current_ready_period = S.GUI.ReadyPeriod1;
+    else
+        current_ready_period = S.GUI.ReadyPeriod2;
+    end
     if(S.GUI.AlarmSound)
         sma = AddState(sma, 'Name', 'Ready', ...
-            'Timer', S.GUI.ReadyPeriod,...
+            'Timer', current_ready_period,...
             'StateChangeConditions', {'Tup', 'Answer','Port1In','Alarm',...
             'Port2In','Alarm'},...
             'OutputActions', {}); 
     else
         sma = AddState(sma, 'Name', 'Ready', ...
-            'Timer', S.GUI.ReadyPeriod,...
+            'Timer', current_ready_period,...
             'StateChangeConditions', {'Tup', 'Answer'},...
             'OutputActions', {}); 
     end
@@ -357,6 +365,10 @@ end
 function UpdateOutcomePlot(TrialTypes, Data, block_length_list, side_list)
 global BpodSystem
 
+disp(block_length_list)
+disp(side_list);
+
+
 for x = 1:Data.nTrials
     LeftIn(x) = ~isnan(Data.RawEvents.Trial{x}.States.LeftIn(1));
     RightIn(x) = ~isnan(Data.RawEvents.Trial{x}.States.RightIn(1));
@@ -428,9 +440,13 @@ for x = 1:Data.nTrials
     right = [];
     try
         left = Data.RawEvents.Trial{x}.Events.Port1In - t0;
+    catch
+    end
+    try
         right = Data.RawEvents.Trial{x}.Events.Port2In - t0;
     catch
     end
+        
     % answer, answer+2  black line
     % blue for left, red for right
     plot([answer answer],[x-1 x],'k');
