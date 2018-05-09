@@ -90,7 +90,7 @@ switch TargetCode
     case 8
         Databyte = str2double(get(BpodSystem.GUIHandles.SoftCodeSelector, 'String'));
         if Databyte >= 0
-            Databyte = uint8(DataByte);
+            Databyte = uint8(Databyte);
         else
             error('The soft code must be a byte in the range 0-255');
         end
