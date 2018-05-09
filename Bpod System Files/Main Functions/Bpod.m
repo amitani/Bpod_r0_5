@@ -97,6 +97,7 @@ catch
                 EmulatorDialog;
             else
                 InitializeHardware(varargin{1})
+                SetupBpod;
             end
         else
             InitializeHardware;
